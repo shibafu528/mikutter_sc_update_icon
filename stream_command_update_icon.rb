@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-Plugin.create(:command_update_icon) do
+Plugin.create(:stream_command_update_icon) do
 
   @enable_update_icon = true
 
