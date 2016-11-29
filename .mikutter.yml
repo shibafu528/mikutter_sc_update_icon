@@ -1,0 +1,10 @@
+---
+slug: :command_update_icon
+depends:
+  mikutter: 3.4.8
+  plugin:
+    - stream_command
+version: '1.0'
+author: 
+name: command_update_icon
+description: ''
