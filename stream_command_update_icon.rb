@@ -15,7 +15,7 @@ Plugin.create(:stream_command_update_icon) do
     end
 
     # 変更先アイコン名を取得する randomなら適当に見繕う
-    icon_name = args[0].gsub(/(\s|　)+/, '')
+    icon_name = args[0].gsub(/(\s|　|\.|\/|~)+/, '')
     icon_name = get_icon_list.sample if icon_name == 'random'
     filename = File.join(File.dirname(__FILE__), 'icons', "#{icon_name}.png")
 
