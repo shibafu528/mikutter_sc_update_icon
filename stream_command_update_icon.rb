@@ -5,9 +5,9 @@ Plugin.create(:stream_command_update_icon) do
   @enable_update_icon = true
 
   # update_icon : 3 requests / 15 min
-  command_rate_limit :update_icon, 3, 15
-
-  on_command_update_icon do |msg, *args|
+  stream_command(:update_icon,
+                 rate_limit: 3,
+                 rate_limit_reset: 15) do |msg, *args|
     service = Service.find { |s| msg.receive_to? s.user_obj }
     unless @enable_update_icon
       service.twitter.post(message: "@#{msg.user.idname} 現在、update_nameを一時中止しています... #{Time.now}")
@@ -32,10 +32,8 @@ Plugin.create(:stream_command_update_icon) do
     end
   end
 
-
-  command_private :enable_update_icon
-
-  on_command_enable_update_icon do |msg, *args|
+  stream_command(:enable_update_icon,
+                 private: true) do |msg, *args|
     @enable_update_icon = args[0] == "true"
     msg.post(message: "@#{msg.user.idname} update_iconの状態を変更 => #{args[0]}")
   end
