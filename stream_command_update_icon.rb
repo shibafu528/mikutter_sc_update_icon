@@ -4,6 +4,12 @@ Plugin.create(:stream_command_update_icon) do
 
   @enable_update_icon = true
 
+  # @param [Plugin::Twitter::World] twitter Twitter World
+  # @param [IO] icon 新しいプロフィール画像のストリーム
+  defspell(:update_profile_icon, :twitter) do |twitter, icon:|
+    (twitter/'account/update_profile_image').json(image: Base64.encode64(icon.read))
+  end
+
   # update_icon : 3 requests / 15 min
   stream_command(:update_icon,
                  rate_limit: 3,
@@ -43,14 +49,6 @@ Plugin.create(:stream_command_update_icon) do
   # @return [String]
   def get_icon_list
     Dir.glob(File.join(File.dirname(__FILE__), 'icons', '*.png')).map { |f| File.basename(f, '.png') }
-  end
-
-end
-
-module MikuTwitter::APIShortcuts
-
-  def update_profile_image(io)
-    (self/'account/update_profile_image').json image: Base64.encode64(io.read)
   end
 
 end
