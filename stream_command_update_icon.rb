@@ -16,7 +16,7 @@ Plugin.create(:stream_command_update_icon) do
                  rate_limit_reset: 15) do |msg, *args|
     service = Service.find { |s| msg.receive_to? s.user_obj }
     unless @enable_update_icon
-      service.twitter.post(message: "@#{msg.user.idname} 現在、update_nameを一時中止しています... #{Time.now}")
+      compose(service, msg, body: "@#{msg.user.idname} 現在、update_nameを一時中止しています... #{Time.now}")
       next
     end
 
@@ -27,21 +27,20 @@ Plugin.create(:stream_command_update_icon) do
 
     if File.exist?(filename) && !service.nil?
       File.open(filename) do |io|
-        service.twitter.update_profile_image(io).next do
-          service.twitter.post(message: ".@#{msg.user.idname}さんの要望でアイコンを\"#{icon_name}\"に変更します (#{Time.now})", 
-                               replyto: msg.id)
+        update_profile_icon(service, icon: io).next do
+          compose(service, msg, body: ".@#{msg.user.idname}さんの要望でアイコンを\"#{icon_name}\"に変更します (#{Time.now})")
         end
       end
     else
-      service.twitter.post(message: "@#{msg.user.idname} 申し訳ありませんが、その色のアイコンはないのです... (#{Time.now})",
-                           replyto: msg.id)
+      compose(service, msg, body: "@#{msg.user.idname} 申し訳ありませんが、その色のアイコンはないのです... (#{Time.now})")
     end
   end
 
   stream_command(:enable_update_icon,
                  private: true) do |msg, *args|
     @enable_update_icon = args[0] == "true"
-    msg.post(message: "@#{msg.user.idname} update_iconの状態を変更 => #{args[0]}")
+    service = Service.find { |s| msg.receive_to? s.user_obj }
+    compose(service, msg, body: "@#{msg.user.idname} update_iconの状態を変更 => #{args[0]}")
   end
 
   # アイコン画像パスの一覧を取得する。
