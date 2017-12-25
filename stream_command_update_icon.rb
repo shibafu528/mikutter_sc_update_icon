@@ -5,18 +5,19 @@ Plugin.create(:stream_command_update_icon) do
   @enable_update_icon = true
 
   # @param [Plugin::Twitter::World] twitter Twitter World
-  # @param [IO] icon 新しいプロフィール画像のストリーム
+  # @param [String] icon Base64でエンコードされた新しいプロフィール画像
   defspell(:update_profile_icon, :twitter) do |twitter, icon:|
-    (twitter/'account/update_profile_image').json(image: Base64.encode64(icon.read))
+    (twitter/'account/update_profile_image').json(image: icon)
   end
 
   # update_icon : 3 requests / 15 min
   stream_command(:update_icon,
                  rate_limit: 3,
                  rate_limit_reset: 15) do |msg, *args|
-    service = Service.find { |s| msg.receive_to? s.user_obj }
+    # 宛先ユーザのWorldを取得
+    service = Plugin.filtering(:worlds, [])[0].find(&msg.method(:to_me?))
     unless @enable_update_icon
-      compose(service, msg, body: "@#{msg.user.idname} 現在、update_nameを一時中止しています... #{Time.now}")
+      compose(service, msg, body: "@#{msg.user.idname} 現在、update_iconを一時中止しています... #{Time.now}")
       next
     end
 
@@ -27,8 +28,11 @@ Plugin.create(:stream_command_update_icon) do
 
     if File.exist?(filename) && !service.nil?
       File.open(filename) do |io|
-        update_profile_icon(service, icon: io).next do
+        update_profile_icon(service, icon: Base64.encode64(io.read)).next do
           compose(service, msg, body: ".@#{msg.user.idname}さんの要望でアイコンを\"#{icon_name}\"に変更します (#{Time.now})")
+        end.trap do |e|
+          warn e
+          compose(service, msg, body: "@#{msg.user.idname} エラーが発生したため、変更できませんでした (#{Time.now})")  
         end
       end
     else
@@ -39,7 +43,7 @@ Plugin.create(:stream_command_update_icon) do
   stream_command(:enable_update_icon,
                  private: true) do |msg, *args|
     @enable_update_icon = args[0] == "true"
-    service = Service.find { |s| msg.receive_to? s.user_obj }
+    service = Plugin.filtering(:worlds, [])[0].find(&msg.method(:to_me?))
     compose(service, msg, body: "@#{msg.user.idname} update_iconの状態を変更 => #{args[0]}")
   end
 
