@@ -1,7 +1,7 @@
 ---
 slug: :stream_command_update_icon
 depends:
-  mikutter: 3.4.8
+  mikutter: 3.6.0
   plugin:
     - stream_command
 version: '1.0'
