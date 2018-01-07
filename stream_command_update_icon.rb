@@ -4,12 +4,6 @@ Plugin.create(:stream_command_update_icon) do
 
   @enable_update_icon = true
 
-  # @param [Plugin::Twitter::World] twitter Twitter World
-  # @param [String] icon Base64でエンコードされた新しいプロフィール画像
-  defspell(:update_profile_icon, :twitter) do |twitter, icon:|
-    (twitter/'account/update_profile_image').json(image: icon)
-  end
-
   # update_icon : 3 requests / 15 min
   stream_command(:update_icon,
                  rate_limit: 3,
@@ -26,14 +20,13 @@ Plugin.create(:stream_command_update_icon) do
     icon_name = get_icon_list.sample if icon_name == 'random'
     filename = File.join(File.dirname(__FILE__), 'icons', "#{icon_name}.png")
 
-    if File.exist?(filename) && !service.nil?
-      File.open(filename) do |io|
-        update_profile_icon(service, icon: Base64.encode64(io.read)).next do
-          compose(service, msg, body: ".@#{msg.user.idname}さんの要望でアイコンを\"#{icon_name}\"に変更します (#{Time.now})")
-        end.trap do |e|
-          warn e
-          compose(service, msg, body: "@#{msg.user.idname} エラーが発生したため、変更できませんでした (#{Time.now})")  
-        end
+    if File.exist?(filename)
+      icon = Plugin.filtering(:photo_filter, filename, [])[1].first
+      update_profile_icon(service, icon).next do
+        compose(service, msg, body: ".@#{msg.user.idname}さんの要望でアイコンを\"#{icon_name}\"に変更します (#{Time.now})")
+      end.trap do |e|
+        warn e
+        compose(service, msg, body: "@#{msg.user.idname} エラーが発生したため、変更できませんでした (#{Time.now})")  
       end
     else
       compose(service, msg, body: "@#{msg.user.idname} 申し訳ありませんが、その色のアイコンはないのです... (#{Time.now})")
